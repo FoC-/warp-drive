@@ -5,6 +5,14 @@
     <title>Warp-Drive</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+        canvas {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
 </head>
 
 <body>
@@ -14,39 +22,19 @@
         import wd from "./src";
         import fragment from './src/glsl/main.frag';
         import vertex from './src/glsl/main.vert';
+        // https://thebookofshaders.com/01/
         // https://javascript.plainenglish.io/breaking-down-the-webgl-triangle-setup-302a03ffa056
         // https://www.khronos.org/files/opengles3-quick-reference-card.pdf
 
         const canvas = document.getElementById('canvas');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth - 50;
+        canvas.height = window.innerHeight - 50;
 
         const gl = canvas.getContext("webgl2");
-        const program = gl.createProgram();
-
-        const attachShader = (src, shaderType) => {
-            const shader = gl.createShader(shaderType);
-            gl.shaderSource(shader, src);
-            gl.compileShader(shader);
-            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                console.error(gl.getShaderInfoLog(shader));
-            }
-            gl.attachShader(program, shader);
-        }
-
-        attachShader(vertex, gl.VERTEX_SHADER);
-        attachShader(fragment, gl.FRAGMENT_SHADER);
-
-        gl.linkProgram(program);
-
-        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            console.error(gl.getProgramInfoLog(program));
-            throw `Program failed.`;
-        }
+        const program = wd.shaders.createProgram(gl, vertex, fragment);
 
         var positionLocation = gl.getAttribLocation(program, "a_position");
         var offsetLocation = gl.getUniformLocation(program, "u_offset");
-
 
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.clearColor(0, 0, 0, 0);
@@ -69,7 +57,7 @@
         var offset = 0;
         gl.vertexAttribPointer(positionLocation, numComponents, type, normalize, stride, offset);
 
-        gl.uniform2f(offsetLocation, gl.canvas.width, gl.canvas.height);
+        // gl.uniform2f(offsetLocation, gl.canvas.width, gl.canvas.height);
 
         // render triangle
         gl.drawArrays(gl.TRIANGLES, 0, 3);
