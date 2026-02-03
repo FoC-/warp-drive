@@ -25,6 +25,7 @@ export const createProgram = (gl, vertexSrc, fragmentSrc) => {
     gl.linkProgram(program);
 
     if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        gl.useProgram(program);
         return program;
     }
 

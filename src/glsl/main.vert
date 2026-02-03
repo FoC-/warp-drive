@@ -1,13 +1,7 @@
-#version 300 es
-precision highp float;
-
-in vec4 a_position;
-
-uniform vec4 u_offset;
-
-out vec4 v_positionWithOffset;
+#version 300 es  
 
 void main() {
-  gl_Position = a_position + u_offset;
-  v_positionWithOffset = a_position + u_offset;
+  float x = float((gl_VertexID & 1) << 2);
+  float y = float((gl_VertexID & 2) << 1);
+  gl_Position = vec4(x - 1.0f, y - 1.0f, 0, 1);
 }

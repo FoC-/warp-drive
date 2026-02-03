@@ -7,17 +7,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <style>
-        canvas {
+        html,
+        body {
+            height: 100%;
+            background-color: black;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .flex-container {
+            height: 100%;
+            padding: 0;
+            margin: 0;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            width: 800px;
+            height: 450px;
         }
     </style>
 </head>
 
 <body>
-    <div id="container"></div>
-    <canvas id="canvas" width="600" height="600"></canvas>
+    <div class="flex-container">
+        <canvas id="canvas" width="800" height="450"></canvas>
+    </div>
     <script type="module">
         import wd from "./src";
         import fragment from './src/glsl/main.frag';
@@ -30,38 +49,25 @@
         canvas.width = window.innerWidth - 50;
         canvas.height = window.innerHeight - 50;
 
-        const gl = canvas.getContext("webgl2");
+        const gl = canvas.getContext("webgl2", { antialias: false });
         const program = wd.shaders.createProgram(gl, vertex, fragment);
-
-        var positionLocation = gl.getAttribLocation(program, "a_position");
-        var offsetLocation = gl.getUniformLocation(program, "u_offset");
-
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 
-        gl.useProgram(program);
+        const timer = { time: 0, then: 0 }
+        function render(time) {
+            time *= 0.001;
+            const now = time;
+            const elapsed = now - timer.then;
+            timer.then = now;
+            timer.time += elapsed;
 
-        const buffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        const triangleCoords = [-1.0, -1.0, 0.0, 1.0, 1.0, 1.0];
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleCoords), gl.STATIC_DRAW);
+            gl.uniform1f(gl.getUniformLocation(program, "iTime"), timer.time);
+            gl.uniform3f(gl.getUniformLocation(program, "iResolution"), gl.canvas.width, gl.canvas.height, 1.0);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            requestAnimationFrame(render);
+        }
 
-
-        // tell the position attribute how to pull data out of the current ARRAY_BUFFER
-        gl.enableVertexAttribArray(positionLocation);
-        var numComponents = 2;
-        var type = gl.FLOAT;
-        var normalize = false;
-        var stride = 0;
-        var offset = 0;
-        gl.vertexAttribPointer(positionLocation, numComponents, type, normalize, stride, offset);
-
-        // gl.uniform2f(offsetLocation, gl.canvas.width, gl.canvas.height);
-
-        // render triangle
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
-
+        requestAnimationFrame(render)
     </script>
 </body>
 
