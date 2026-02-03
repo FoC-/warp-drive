@@ -10,39 +10,13 @@
 <body>
     <div id="container"></div>
     <canvas id="canvas" width="600" height="600"></canvas>
-    <script id="vertex-shader" type="x-vertex/x-shader">
-#version 300 es
- 
-in vec4 a_position;
- 
-uniform vec4 u_offset;
- 
-out vec4 v_positionWithOffset;
- 
-void main() {
-  gl_Position = a_position + u_offset;
-  v_positionWithOffset = a_position + u_offset;
-}
-    </script>
-    <script id="fragment-shader" type="x-fragment/x-shader">
-#version 300 es
-precision highp float;
- 
-in vec4 v_positionWithOffset;
- 
-out vec4 outColor;
- 
-void main() {
-  // convert from clipsapce (-1 <-> +1) to color space (0 -> 1).
-  vec4 color = v_positionWithOffset * 0.5 + 0.5;
-  outColor = color;
-}
-    </script>
     <script type="module">
         import wd from "./src";
+        import fragment from './src/glsl/main.frag';
+        import vertex from './src/glsl/main.vert';
         // https://javascript.plainenglish.io/breaking-down-the-webgl-triangle-setup-302a03ffa056
         // https://www.khronos.org/files/opengles3-quick-reference-card.pdf
-        
+
         const canvas = document.getElementById('canvas');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -60,11 +34,8 @@ void main() {
             gl.attachShader(program, shader);
         }
 
-        const vertexSrc = document.getElementById('vertex-shader').innerHTML.trim();
-        attachShader(vertexSrc, gl.VERTEX_SHADER);
-
-        const fragmentSrc = document.getElementById('fragment-shader').innerHTML.trim();
-        attachShader(fragmentSrc, gl.FRAGMENT_SHADER);
+        attachShader(vertex, gl.VERTEX_SHADER);
+        attachShader(fragment, gl.FRAGMENT_SHADER);
 
         gl.linkProgram(program);
 
