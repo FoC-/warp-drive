@@ -4,6 +4,7 @@
 <head>
     <title>Warp-Drive</title>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 
 <body>
@@ -11,25 +12,37 @@
     <canvas id="canvas" width="600" height="600"></canvas>
     <script id="vertex-shader" type="x-vertex/x-shader">
 #version 300 es
-precision mediump float;
-in vec2 position;
-
+ 
+in vec4 a_position;
+ 
+uniform vec4 u_offset;
+ 
+out vec4 v_positionWithOffset;
+ 
 void main() {
-gl_Position = vec4(position.x, position.y, 0.0, 1.0); //x,y,z,w
+  gl_Position = a_position + u_offset;
+  v_positionWithOffset = a_position + u_offset;
 }
     </script>
     <script id="fragment-shader" type="x-fragment/x-shader">
 #version 300 es
-precision mediump float;
-out vec4 color;
-
-void main () {
-color = vec4(0.0,1.0,1.0,0.2); //r,g,b,a
+precision highp float;
+ 
+in vec4 v_positionWithOffset;
+ 
+out vec4 outColor;
+ 
+void main() {
+  // convert from clipsapce (-1 <-> +1) to color space (0 -> 1).
+  vec4 color = v_positionWithOffset * 0.5 + 0.5;
+  outColor = color;
 }
     </script>
     <script type="module">
         import wd from "./src";
         // https://javascript.plainenglish.io/breaking-down-the-webgl-triangle-setup-302a03ffa056
+        // https://www.khronos.org/files/opengles3-quick-reference-card.pdf
+        
         const canvas = document.getElementById('canvas');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -60,7 +73,12 @@ color = vec4(0.0,1.0,1.0,0.2); //r,g,b,a
             throw `Program failed.`;
         }
 
-        gl.clearColor(0.1, 0.2, 0.3, 1.0);
+        var positionLocation = gl.getAttribLocation(program, "a_position");
+        var offsetLocation = gl.getUniformLocation(program, "u_offset");
+
+
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 
         gl.useProgram(program);
@@ -70,14 +88,17 @@ color = vec4(0.0,1.0,1.0,0.2); //r,g,b,a
         const triangleCoords = [-1.0, -1.0, 0.0, 1.0, 1.0, 1.0];
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleCoords), gl.STATIC_DRAW);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-        const position = gl.getAttribLocation(program, "position");
+        // tell the position attribute how to pull data out of the current ARRAY_BUFFER
+        gl.enableVertexAttribArray(positionLocation);
+        var numComponents = 2;
+        var type = gl.FLOAT;
+        var normalize = false;
+        var stride = 0;
+        var offset = 0;
+        gl.vertexAttribPointer(positionLocation, numComponents, type, normalize, stride, offset);
 
-        gl.enableVertexAttribArray(position);
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.vertexAttribPointer(position, 2, gl.FLOAT, gl.FALSE, 0, 0);
-
+        gl.uniform2f(offsetLocation, gl.canvas.width, gl.canvas.height);
 
         // render triangle
         gl.drawArrays(gl.TRIANGLES, 0, 3);
